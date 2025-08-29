@@ -1,0 +1,168 @@
+"use client";
+
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import type { Post } from "@/lib/types";
+
+import { Button } from "@/components/ui/button";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Card, CardContent } from "@/components/ui/card";
+import { Switch } from "@/components/ui/switch";
+import { useToast } from "@/hooks/use-toast";
+import { useRouter } from "next/navigation";
+import Image from "next/image";
+import { useState } from "react";
+import { Loader2, Send } from "lucide-react";
+
+const formSchema = z.object({
+  title: z.string().min(5, "Title must be at least 5 characters long.").max(100),
+  content: z.string().min(20, "Content must be at least 20 characters long."),
+  imageUrl: z.string().url("Please enter a valid image URL.").optional(),
+  published: z.boolean(),
+});
+
+type PostFormProps = {
+  post?: Post;
+};
+
+export function PostForm({ post }: PostFormProps) {
+  const { toast } = useToast();
+  const router = useRouter();
+  const [imagePreview, setImagePreview] = useState<string | null>(post?.imageUrl || null);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      title: post?.title || "",
+      content: post?.content || "",
+      imageUrl: post?.imageUrl || "",
+      published: post?.published || false,
+    },
+  });
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (file) {
+          const reader = new FileReader();
+          reader.onloadend = () => {
+              setImagePreview(reader.result as string);
+              // In a real app, you would upload the file and get a URL
+              // For this mock, we'll just use the base64 data URL for preview
+              form.setValue('imageUrl', reader.result as string);
+          };
+          reader.readAsDataURL(file);
+      }
+  };
+
+  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+    setIsLoading(true);
+    // Simulate API call
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    setIsLoading(false);
+
+    toast({
+      title: post ? "Post Updated!" : "Post Created!",
+      description: `Your post "${values.title}" has been saved successfully.`,
+    });
+
+    // In a real app, you would get the new/updated post ID and redirect
+    router.push('/');
+  };
+
+  return (
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+        <Card>
+          <CardContent className="p-6 space-y-6">
+            <FormField
+              control={form.control}
+              name="title"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-lg">Title</FormLabel>
+                  <FormControl>
+                    <Input placeholder="The title of your post" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            <FormItem>
+              <FormLabel className="text-lg">Featured Image</FormLabel>
+                {imagePreview && (
+                    <div className="relative w-full h-64 rounded-md overflow-hidden border">
+                        <Image src={imagePreview} alt="Image preview" layout="fill" objectFit="cover" />
+                    </div>
+                )}
+              <FormControl>
+                <Input type="file" accept="image/*" onChange={handleImageChange} />
+              </FormControl>
+              <FormDescription>Upload an image to accompany your post.</FormDescription>
+              <FormMessage />
+            </FormItem>
+
+            <FormField
+              control={form.control}
+              name="content"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-lg">Content</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      placeholder="Write your heart out..."
+                      className="min-h-[300px]"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormDescription>
+                    This supports markdown formatting.
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="published"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                  <div className="space-y-0.5">
+                    <FormLabel className="text-base">Publish</FormLabel>
+                    <FormDescription>
+                      Make this post visible to everyone.
+                    </FormDescription>
+                  </div>
+                  <FormControl>
+                    <Switch
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+          </CardContent>
+        </Card>
+        <div className="flex justify-end">
+            <Button type="submit" size="lg" disabled={isLoading}>
+              {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
+              {post ? "Save Changes" : "Publish Post"}
+            </Button>
+        </div>
+      </form>
+    </Form>
+  );
+}
