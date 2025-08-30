@@ -17,7 +17,6 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
@@ -26,6 +25,7 @@ import Image from "next/image";
 import { useState, useEffect } from "react";
 import { Loader2, Send } from "lucide-react";
 import { MultiSelect } from "@/components/ui/multi-select";
+import { RichTextEditor } from "@/components/blog/RichTextEditor";
 
 const formSchema = z.object({
   title: z
@@ -186,15 +186,11 @@ export function PostForm({ post }: PostFormProps) {
                 <FormItem>
                   <FormLabel className="text-lg">Content</FormLabel>
                   <FormControl>
-                    <Textarea
-                      placeholder="Write your heart out..."
-                      className="min-h-[300px]"
-                      {...field}
+                    <RichTextEditor
+                      value={field.value}
+                      onChange={field.onChange}
                     />
                   </FormControl>
-                  <FormDescription>
-                    This supports markdown formatting.
-                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
