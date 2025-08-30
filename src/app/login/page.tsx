@@ -22,8 +22,8 @@ export default function LoginPage() {
   const { login } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [email, setEmail] = useState("aria.m@example.com");
+  const [password, setPassword] = useState("password");
   const [isLoading, setIsLoading] = useState(false);
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -36,7 +36,7 @@ export default function LoginPage() {
           title: "Login Successful",
           description: `Welcome back, ${user.name}!`,
         });
-        router.push("/");
+        router.push(`/profile/${user.id}`);
       } else {
         toast({
           variant: "destructive",
@@ -45,13 +45,13 @@ export default function LoginPage() {
         });
       }
     } catch (error) {
-       toast({
-          variant: "destructive",
-          title: "An Error Occurred",
-          description: "Something went wrong. Please try again later.",
-        });
+      toast({
+        variant: "destructive",
+        title: "An Error Occurred",
+        description: "Something went wrong. Please try again later.",
+      });
     } finally {
-        setIsLoading(false);
+      setIsLoading(false);
     }
   };
 
@@ -100,8 +100,8 @@ export default function LoginPage() {
           </CardContent>
           <CardFooter className="flex flex-col">
             <Button className="w-full" type="submit" disabled={isLoading}>
-                {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Sign In
+              {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Sign In
             </Button>
             <div className="mt-4 text-center text-sm">
               Don&apos;t have an account?{" "}
