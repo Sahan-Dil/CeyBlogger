@@ -11,7 +11,7 @@ import { cn } from "@/lib/utils";
 type Option = Record<"value" | "label", string>;
 
 interface MultiSelectProps
-  extends React.ComponentProps<typeof CommandPrimitive> {
+  extends Omit<React.ComponentProps<typeof CommandPrimitive>, "onChange"> {
   options: Option[];
   selected: string[];
   onChange: (value: string[]) => void;
