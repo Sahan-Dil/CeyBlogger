@@ -73,9 +73,10 @@ export default async function PostPage({ params }: { params: { id: string } }) {
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-12">
           {/* Post Content */}
           <div className="lg:col-span-3">
-            <div className="prose max-w-none prose-lg prose-p:text-foreground/80 prose-headings:text-foreground">
-              <p>{post.content}</p>
-            </div>
+            <div
+              className="prose max-w-none prose-lg dark:prose-invert prose-p:text-foreground/80 prose-headings:text-foreground prose-a:text-primary hover:prose-a:text-primary/80 prose-strong:text-foreground prose-blockquote:border-primary"
+              dangerouslySetInnerHTML={{ __html: post.content }}
+            />
 
             <Separator className="my-12" />
 
