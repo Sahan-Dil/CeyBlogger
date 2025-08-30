@@ -107,6 +107,18 @@ const comments: Comment[] = [
   },
 ];
 
+const allTags: string[] = [
+  "Design",
+  "Technology",
+  "Art",
+  "UX",
+  "Productivity",
+  "Lifestyle",
+  "Sustainability",
+  "DIY",
+  "Innovation",
+];
+
 // Simulate API calls
 export const getPosts = async (): Promise<Post[]> => {
   return new Promise((resolve) => setTimeout(() => resolve(posts), 50));
@@ -132,4 +144,8 @@ export const getComments = async (postId: string): Promise<Comment[]> => {
   return new Promise((resolve) =>
     setTimeout(() => resolve(comments.filter((c) => c.postId === postId)), 50)
   );
+};
+
+export const getTags = async (): Promise<string[]> => {
+  return new Promise((resolve) => setTimeout(() => resolve(allTags), 50));
 };

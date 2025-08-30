@@ -4,6 +4,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import type { Post } from "@/lib/types";
+import { getTags } from "@/lib/data";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -22,13 +23,18 @@ import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Loader2, Send } from "lucide-react";
+import { MultiSelect } from "@/components/ui/multi-select";
 
 const formSchema = z.object({
-  title: z.string().min(5, "Title must be at least 5 characters long.").max(100),
+  title: z
+    .string()
+    .min(5, "Title must be at least 5 characters long.")
+    .max(100),
   content: z.string().min(20, "Content must be at least 20 characters long."),
   imageUrl: z.string().url("Please enter a valid image URL.").optional(),
+  tags: z.array(z.string()).min(1, "Please select at least one tag."),
   published: z.boolean(),
 });
 
@@ -39,8 +45,19 @@ type PostFormProps = {
 export function PostForm({ post }: PostFormProps) {
   const { toast } = useToast();
   const router = useRouter();
-  const [imagePreview, setImagePreview] = useState<string | null>(post?.imageUrl || null);
+  const [imagePreview, setImagePreview] = useState<string | null>(
+    post?.imageUrl || null
+  );
   const [isLoading, setIsLoading] = useState(false);
+  const [availableTags, setAvailableTags] = useState<string[]>([]);
+
+  useEffect(() => {
+    async function fetchTags() {
+      const tags = await getTags();
+      setAvailableTags(tags);
+    }
+    fetchTags();
+  }, []);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -48,22 +65,23 @@ export function PostForm({ post }: PostFormProps) {
       title: post?.title || "",
       content: post?.content || "",
       imageUrl: post?.imageUrl || "",
+      tags: post?.tags || [],
       published: post?.published || false,
     },
   });
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-      const file = e.target.files?.[0];
-      if (file) {
-          const reader = new FileReader();
-          reader.onloadend = () => {
-              setImagePreview(reader.result as string);
-              // In a real app, you would upload the file and get a URL
-              // For this mock, we'll just use the base64 data URL for preview
-              form.setValue('imageUrl', reader.result as string);
-          };
-          reader.readAsDataURL(file);
-      }
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+        // In a real app, you would upload the file and get a URL
+        // For this mock, we'll just use the base64 data URL for preview
+        form.setValue("imageUrl", reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
@@ -78,7 +96,16 @@ export function PostForm({ post }: PostFormProps) {
     });
 
     // In a real app, you would get the new/updated post ID and redirect
-    router.push('/');
+    router.push("/");
+  };
+
+  const handleCreateTag = (tagName: string) => {
+    const newTag = tagName.trim();
+    if (newTag && !availableTags.includes(newTag)) {
+      const newTags = [...availableTags, newTag];
+      setAvailableTags(newTags);
+      // In a real app, you'd also save this new tag to your backend
+    }
   };
 
   return (
@@ -99,20 +126,58 @@ export function PostForm({ post }: PostFormProps) {
                 </FormItem>
               )}
             />
-            
+
             <FormItem>
               <FormLabel className="text-lg">Featured Image</FormLabel>
-                {imagePreview && (
-                    <div className="relative w-full h-64 rounded-md overflow-hidden border">
-                        <Image src={imagePreview} alt="Image preview" layout="fill" objectFit="cover" />
-                    </div>
-                )}
+              {imagePreview && (
+                <div className="relative w-full h-64 rounded-md overflow-hidden border">
+                  <Image
+                    src={imagePreview}
+                    alt="Image preview"
+                    layout="fill"
+                    objectFit="cover"
+                  />
+                </div>
+              )}
               <FormControl>
-                <Input type="file" accept="image/*" onChange={handleImageChange} />
+                <Input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageChange}
+                />
               </FormControl>
-              <FormDescription>Upload an image to accompany your post.</FormDescription>
+              <FormDescription>
+                Upload an image to accompany your post.
+              </FormDescription>
               <FormMessage />
             </FormItem>
+
+            <FormField
+              control={form.control}
+              name="tags"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-lg">Tags</FormLabel>
+                  <FormControl>
+                    <MultiSelect
+                      options={availableTags.map((tag) => ({
+                        value: tag,
+                        label: tag,
+                      }))}
+                      selected={field.value}
+                      onChange={field.onChange}
+                      onCreate={handleCreateTag}
+                      placeholder="Select or create tags..."
+                      className="w-full"
+                    />
+                  </FormControl>
+                  <FormDescription>
+                    Select existing tags or type to create new ones.
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
             <FormField
               control={form.control}
@@ -157,10 +222,14 @@ export function PostForm({ post }: PostFormProps) {
           </CardContent>
         </Card>
         <div className="flex justify-end">
-            <Button type="submit" size="lg" disabled={isLoading}>
-              {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
-              {post ? "Save Changes" : "Publish Post"}
-            </Button>
+          <Button type="submit" size="lg" disabled={isLoading}>
+            {isLoading ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <Send className="mr-2 h-4 w-4" />
+            )}
+            {post ? "Save Changes" : "Publish Post"}
+          </Button>
         </div>
       </form>
     </Form>
