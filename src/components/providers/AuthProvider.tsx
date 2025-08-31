@@ -59,6 +59,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return null;
   };
 
+  const register = async (name: string, email: string, password: string) => {
+    setLoading(true);
+    try {
+      const data = await post<{ user: User; token: string }>("/auth/register", {
+        name,
+        email,
+        password,
+      });
+
+      if (data?.token && data.user) {
+        const userObj: User = {
+          id: data.user.id ?? "unknown",
+          name: data.user.name ?? "Unknown",
+          email: data.user.email ?? "unknown@email.com",
+          avatarUrl: data.user.avatarUrl ?? "",
+          bio: data.user.bio ?? "",
+        };
+
+        setToken(data.token);
+        sessionStorage.setItem("token", data.token);
+        sessionStorage.setItem("loggedInUser", JSON.stringify(userObj));
+        setUser(userObj);
+        setLoading(false);
+        return data.user;
+      }
+    } catch (err) {
+      console.error("Register error", err);
+    }
+    setLoading(false);
+    return null;
+  };
+
   const logout = () => {
     clearToken();
     sessionStorage.removeItem("loggedInUser");
@@ -67,7 +99,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, loading }}>
+    <AuthContext.Provider value={{ user, login, logout, loading, register }}>
       {children}
     </AuthContext.Provider>
   );
