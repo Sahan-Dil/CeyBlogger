@@ -2,7 +2,7 @@ import type { Post, User, Comment } from "./types";
 
 const users: User[] = [
   {
-    id: "user-1",
+    id: "68b32bff282fc0381139fa6f",
     name: "Aria Montgomery",
     email: "aria.m@example.com",
     avatarUrl: "https://i.pravatar.cc/150?u=user-1",
