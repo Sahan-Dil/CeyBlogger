@@ -140,6 +140,10 @@ export const getUser = async (id: string): Promise<User | undefined> => {
   );
 };
 
+export const updateUser = async (user: User): Promise<User | undefined> => {
+  return new Promise((resolve) => setTimeout(() => resolve(user), 50));
+};
+
 export const getComments = async (postId: string): Promise<Comment[]> => {
   return new Promise((resolve) =>
     setTimeout(() => resolve(comments.filter((c) => c.postId === postId)), 50)

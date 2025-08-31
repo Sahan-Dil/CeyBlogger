@@ -13,6 +13,11 @@ interface AuthContextType {
   ) => Promise<User | null>;
   logout: () => void;
   loading: boolean;
+  updateUser: (data: {
+    name: string;
+    bio?: string;
+    avatarUrl?: string;
+  }) => Promise<User | null>;
 }
 
 export const AuthContext = createContext<AuthContextType | undefined>(

@@ -1,7 +1,7 @@
 "use client";
 
 import { AuthContext } from "@/hooks/use-auth";
-import { clearToken, post, setToken } from "@/lib/api";
+import { apiFetch, clearToken, getToken, post, setToken } from "@/lib/api";
 import { getUser, getUsers } from "@/lib/data";
 import type { User } from "@/lib/types";
 import { useRouter } from "next/navigation";
@@ -34,7 +34,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         email,
         password,
       });
-      console.log("Login response data:", data);
 
       if (data?.token && data.user) {
         const userObj: User = {
@@ -91,6 +90,44 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return null;
   };
 
+  // inside AuthProvider
+  const updateUser = async (data: {
+    name: string;
+    bio?: string;
+    avatarUrl?: string;
+  }) => {
+    if (!user) return null;
+
+    try {
+      const formData = new FormData();
+      formData.append("name", data.name);
+      if (data.bio) formData.append("bio", data.bio);
+
+      // If avatarUrl is a data URL (from file upload), convert to blob
+      if (data.avatarUrl && data.avatarUrl.startsWith("data:")) {
+        const res = await fetch(data.avatarUrl);
+        const blob = await res.blob();
+        formData.append("avatar", blob, "avatar.png");
+      }
+
+      const updatedUser = await apiFetch<User>(`/users/${user.id}`, {
+        method: "PUT",
+        body: formData,
+        headers: {
+          Authorization: `Bearer ${getToken()}`,
+        },
+      });
+
+      // Update local state + sessionStorage
+      setUser(updatedUser);
+      sessionStorage.setItem("loggedInUser", JSON.stringify(updatedUser));
+      return updatedUser;
+    } catch (err) {
+      console.error("Update user error", err);
+      return null;
+    }
+  };
+
   const logout = () => {
     clearToken();
     sessionStorage.removeItem("loggedInUser");
@@ -99,7 +136,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, loading, register }}>
+    <AuthContext.Provider
+      value={{ user, login, register, logout, loading, updateUser }}
+    >
       {children}
     </AuthContext.Provider>
   );
