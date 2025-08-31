@@ -12,39 +12,41 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
 
   useEffect(() => {
-    // Mock checking for a logged-in user in session storage
-    const loggedInUserId = sessionStorage.getItem('loggedInUserId');
+    const loggedInUserId = sessionStorage.getItem("loggedInUserId");
     if (loggedInUserId) {
-      getUser(loggedInUserId).then(u => {
-        if(u) setUser(u);
+      getUser(loggedInUserId).then((u) => {
+        if (u) setUser(u);
         setLoading(false);
       });
     } else {
-        setLoading(false);
+      setLoading(false);
     }
   }, []);
 
-  const login = async (email: string, password?: string): Promise<User | null> => {
+  const login = async (
+    email: string,
+    password?: string
+  ): Promise<User | null> => {
     setLoading(true);
     // Mock login logic
     const users = await getUsers();
-    const foundUser = users.find(u => u.email === email);
-    
+    const foundUser = users.find((u) => u.email === email);
+
     if (foundUser) {
       setUser(foundUser);
-      sessionStorage.setItem('loggedInUserId', foundUser.id);
+      sessionStorage.setItem("loggedInUserId", foundUser.id);
       setLoading(false);
       return foundUser;
     }
-    
+
     setLoading(false);
     return null;
   };
 
   const logout = () => {
     setUser(null);
-    sessionStorage.removeItem('loggedInUserId');
-    router.push('/');
+    sessionStorage.removeItem("loggedInUserId");
+    router.push("/");
   };
 
   return (
