@@ -26,6 +26,7 @@ import { useState, useEffect } from "react";
 import { Loader2, Send } from "lucide-react";
 import { MultiSelect } from "@/components/ui/multi-select";
 import { RichTextEditor } from "@/components/blog/RichTextEditor";
+import { getToken } from "@/lib/api";
 
 const formSchema = z.object({
   title: z
@@ -84,19 +85,51 @@ export function PostForm({ post }: PostFormProps) {
     }
   };
 
+  const token = getToken();
+
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
+    if (!token) {
+      toast({
+        title: "Unauthorized",
+        description: "You must be logged in to create a post.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsLoading(true);
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    setIsLoading(false);
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/posts`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(values),
+      });
 
-    toast({
-      title: post ? "Post Updated!" : "Post Created!",
-      description: `Your post "${values.title}" has been saved successfully.`,
-    });
+      if (!res.ok) {
+        throw new Error("Failed to create post");
+      }
 
-    // In a real app, you would get the new/updated post ID and redirect
-    router.push("/");
+      const createdPost = await res.json();
+
+      toast({
+        title: "Post Created!",
+        description: `Your post "${createdPost.title}" has been saved successfully.`,
+      });
+
+      router.push(`/posts/${createdPost.id}`);
+    } catch (err: any) {
+      console.error(err);
+      toast({
+        title: "Error",
+        description: err?.message || "Something went wrong",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleCreateTag = (tagName: string) => {

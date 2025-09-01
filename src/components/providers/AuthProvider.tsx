@@ -18,6 +18,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (savedUser) setUser(JSON.parse(savedUser));
     if (savedToken) setToken(savedToken);
 
+    import("@/lib/api").then((api) => api.setGlobalLogout(logout));
+
     setLoading(false);
   }, []);
 

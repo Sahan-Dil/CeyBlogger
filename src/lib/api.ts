@@ -44,6 +44,7 @@ async function parseResponse<T>(res: Response): Promise<T> {
   if (res.status === 204) return undefined as unknown as T;
 
   const text = await res.text();
+
   if (!res.ok) {
     let parsed;
     try {
@@ -55,6 +56,13 @@ async function parseResponse<T>(res: Response): Promise<T> {
       parsed && typeof parsed === "object"
         ? parsed.message ?? JSON.stringify(parsed)
         : parsed ?? res.statusText;
+
+    // Auto logout if 401
+    if (res.status === 401 && globalLogout) {
+      console.warn("Unauthorized! Logging out...");
+      globalLogout();
+    }
+
     throw new ApiError(res.status, message, parsed);
   }
 
@@ -144,3 +152,9 @@ export const getAuthHeaders = () => {
   const token = getToken();
   return token ? { Authorization: `Bearer ${token}` } : {};
 };
+
+let globalLogout: (() => void) | null = null;
+
+export function setGlobalLogout(logoutFn: () => void) {
+  globalLogout = logoutFn;
+}

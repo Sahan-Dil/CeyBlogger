@@ -71,9 +71,10 @@ export function PostCard({ post }: PostCardProps) {
             {post.title}
           </CardTitle>
         </Link>
-        <p className="mt-3 text-muted-foreground line-clamp-3">
-          {post.content}
-        </p>
+        <p
+          className="mt-3 text-muted-foreground line-clamp-3"
+          dangerouslySetInnerHTML={{ __html: post.content }}
+        />
       </CardContent>
       <CardFooter className="p-6 pt-0 flex justify-between items-center">
         <div className="flex items-center gap-3">
