@@ -5,28 +5,39 @@ import { useAuth } from "@/hooks/use-auth";
 import { apiFetch } from "@/lib/api";
 import type { User } from "@/lib/types";
 
-export function useUser(userId: string) {
+interface UseUserResult {
+  user: User | null;
+  loading: boolean;
+  error: string | null;
+  refetch: () => void;
+}
+
+export function useUser(userId?: string): UseUserResult {
   const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState<boolean>(!!userId);
+  const [error, setError] = useState<string | null>(null);
   const { user: authUser } = useAuth();
 
+  const fetchUser = async () => {
+    if (!userId || !authUser) return;
+    setLoading(true);
+    setError(null);
+
+    try {
+      const data = await apiFetch<User>(`/users/${userId}`);
+      setUser(data);
+    } catch (err) {
+      console.error("Error fetching user:", err);
+      setError("Failed to load user");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    if (!authUser) return;
-
-    const fetchUser = async () => {
-      setLoading(true);
-      try {
-        const data = await apiFetch<User>(`/users/${userId}`);
-        setUser(data);
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchUser();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId, authUser]);
 
-  return { user, loading };
+  return { user, loading, error, refetch: fetchUser };
 }
