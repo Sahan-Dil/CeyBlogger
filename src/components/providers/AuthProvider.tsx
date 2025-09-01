@@ -2,7 +2,6 @@
 
 import { AuthContext } from "@/hooks/use-auth";
 import { apiFetch, clearToken, getToken, post, setToken } from "@/lib/api";
-import { getUser, getUsers } from "@/lib/data";
 import type { User } from "@/lib/types";
 import { useRouter } from "next/navigation";
 import { type ReactNode, useState, useEffect } from "react";

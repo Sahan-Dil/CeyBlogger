@@ -2,6 +2,7 @@
 
 import { usePost } from "@/hooks/use-post";
 import { useUser } from "@/hooks/use-user";
+import { useAuth } from "@/hooks/use-auth"; // <- import auth
 import { useParams } from "next/navigation";
 import Image from "next/image";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -19,6 +20,9 @@ export default function PostPage() {
 
   const { post } = usePost(postId);
   const { user: author } = useUser(post?.authorId!);
+  const { user: authUser } = useAuth(); // get logged-in user
+
+  const isAuthor = authUser?.id === post?.authorId;
 
   return (
     <>
@@ -91,16 +95,19 @@ export default function PostPage() {
                     </Button>
                   </div>
 
-                  <div className="flex items-center gap-2 mt-4">
-                    <Button variant="outline" size="sm" asChild>
-                      <Link href={`/posts/${post.id}/edit`}>
-                        <Edit className="mr-2 h-4 w-4" /> Edit
-                      </Link>
-                    </Button>
-                    <Button variant="destructive" size="sm">
-                      <Trash2 className="mr-2 h-4 w-4" /> Delete
-                    </Button>
-                  </div>
+                  {/* Only show if logged-in user is the author */}
+                  {isAuthor && (
+                    <div className="flex items-center gap-2 mt-4">
+                      <Button variant="outline" size="sm" asChild>
+                        <Link href={`/posts/${post.id}/edit`}>
+                          <Edit className="mr-2 h-4 w-4" /> Edit
+                        </Link>
+                      </Button>
+                      <Button variant="destructive" size="sm">
+                        <Trash2 className="mr-2 h-4 w-4" /> Delete
+                      </Button>
+                    </div>
+                  )}
                 </div>
 
                 {/* Author Box */}

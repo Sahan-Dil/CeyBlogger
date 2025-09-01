@@ -11,35 +11,59 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { PostsFeed } from "@/components/blog/PostsFeed";
+import { FeaturedReadButton } from "@/components/blog/FeaturedReadButton";
 
 export default async function Home() {
-  const posts = await getPosts();
-  const publishedPosts = posts.filter((p) => p.published);
-  const featuredPost = publishedPosts[0];
-  const recentPosts = publishedPosts.slice(1);
+  // First load: latest 9 posts
+  const { posts: allPosts, nextCursor } = await getPosts(9);
+  const featuredPost = allPosts[0];
+  const recentPosts = allPosts.slice(1); // 8 posts
 
   return (
     <div className="w-full">
       {/* Hero Section */}
       {featuredPost && (
-        <section className="relative w-full h-[60vh] bg-primary/20">
-          <div className="container mx-auto h-full flex flex-col justify-center px-4 md:px-6">
-            <h1 className="text-4xl md:text-6xl font-bold max-w-3xl text-primary-foreground mix-blend-difference">
-              {featuredPost.title}
-            </h1>
-            <p className="mt-4 max-w-2xl text-lg md:text-xl text-primary-foreground/80 mix-blend-difference">
-              A deep dive into the latest trends and technologies shaping our
-              world.
-            </p>
-            <Link href={`/posts/${featuredPost.id}`} className="mt-8">
-              <Button
-                size="lg"
-                className="bg-accent hover:bg-accent/90 text-accent-foreground"
-              >
-                Read Article <ArrowRight className="ml-2 h-5 w-5" />
-              </Button>
-            </Link>
-          </div>
+        <section className="relative w-full h-[60vh]">
+          {featuredPost ? (
+            // Featured post available
+            <div className="relative w-full h-full bg-primary/20">
+              <div className="absolute inset-0">
+                <img
+                  src={featuredPost.imageUrl}
+                  alt={featuredPost.title}
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute inset-0 bg-black/30" />
+              </div>
+
+              <div className="container relative mx-auto h-full flex flex-col justify-center px-4 md:px-6">
+                <h1 className="text-4xl md:text-6xl font-bold max-w-3xl text-primary-foreground">
+                  {featuredPost.title}
+                </h1>
+                <p className="mt-4 max-w-2xl text-lg md:text-xl text-primary-foreground/80">
+                  {featuredPost.content.slice(0, 150)}...
+                </p>
+                <div className="mt-8">
+                  <FeaturedReadButton postId={featuredPost.id} />
+                </div>
+              </div>
+            </div>
+          ) : (
+            // Fallback when featured post is missing
+            <div className="flex items-center justify-center w-full h-full bg-primary/20">
+              <div className="text-center px-4 md:px-6">
+                <h1 className="text-4xl md:text-5xl font-bold text-primary-foreground">
+                  Welcome to Our Blog
+                </h1>
+                <p className="mt-4 max-w-2xl text-lg md:text-xl text-primary-foreground/80">
+                  Discover the latest trends, insights, and stories from our
+                  authors. Explore articles on technology, design, lifestyle,
+                  and more.
+                </p>
+              </div>
+            </div>
+          )}
         </section>
       )}
 
@@ -79,15 +103,9 @@ export default async function Home() {
 
         {/* Recent Posts */}
         <h2 className="text-3xl font-bold mb-8">Recent Posts</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {recentPosts.map((post) => (
-            <PostCard key={post.id} post={post} />
-          ))}
-        </div>
 
-        <div className="mt-12 text-center">
-          <Button variant="outline">Load More Posts</Button>
-        </div>
+        {/* Client component handles pagination */}
+        <PostsFeed initialPosts={recentPosts} initialCursor={nextCursor} />
       </div>
     </div>
   );
