@@ -41,14 +41,14 @@ export function ProfileForm({ user: initialUser }: ProfileFormProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  const isCurrentUser = user?.id === initialUser.id;
+  const isCurrentUser = user?.id === initialUser?.id;
 
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
     defaultValues: {
-      name: initialUser.name,
-      bio: initialUser.bio,
-      avatarUrl: initialUser.avatarUrl,
+      name: initialUser?.name,
+      bio: initialUser?.bio,
+      avatarUrl: initialUser?.avatarUrl,
     },
   });
 

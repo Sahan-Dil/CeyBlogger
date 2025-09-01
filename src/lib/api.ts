@@ -91,8 +91,20 @@ export async function apiFetch<T = any>(
 }
 
 /* Convenience wrappers */
-export const get = <T = any>(path: string, init?: RequestInit) =>
-  apiFetch<T>(path, { method: "GET", ...init });
+export const get = <T = any>(path: string, init?: RequestInit) => {
+  const token = getToken();
+  console.log("Token in GET:", token);
+  const headers: HeadersInit = {
+    ...(init?.headers || {}),
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+  };
+
+  return apiFetch<T>(path, {
+    method: "GET",
+    ...init,
+    headers,
+  });
+};
 
 export const post = <T = any>(path: string, body?: any, init?: RequestInit) => {
   const isForm = body instanceof FormData;

@@ -19,7 +19,7 @@ type PostCardProps = {
 };
 
 export async function PostCard({ post }: PostCardProps) {
-  const author = await getUser(post.authorId);
+  // const author = await getUser(post.authorId);
 
   return (
     <Card className="flex flex-col overflow-hidden transition-all hover:shadow-lg">
@@ -54,7 +54,7 @@ export async function PostCard({ post }: PostCardProps) {
         </p>
       </CardContent>
       <CardFooter className="p-6 pt-0 flex justify-between items-center">
-        <div className="flex items-center gap-3">
+        {/* <div className="flex items-center gap-3">
           {author && (
             <Link
               href={`/profile/${author.id}`}
@@ -74,7 +74,7 @@ export async function PostCard({ post }: PostCardProps) {
               </div>
             </Link>
           )}
-        </div>
+        </div> */}
         <Link
           href={`/posts/${post.id}`}
           className="text-primary hover:underline flex items-center gap-1 text-sm"

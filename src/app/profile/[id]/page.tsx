@@ -1,5 +1,7 @@
+"use client";
+
 import { getPosts, getUser } from "@/lib/data";
-import { notFound } from "next/navigation";
+import { notFound, useParams } from "next/navigation";
 import Image from "next/image";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -7,32 +9,34 @@ import { PostCard } from "@/components/blog/PostCard";
 import { Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ProfileForm } from "@/components/blog/ProfileForm";
+import { useUser } from "@/hooks/use-user";
+import { use } from "react";
 
-export default async function ProfilePage({
-  params,
-}: {
-  params: { id: string };
-}) {
-  const user = await getUser(params.id);
+export default function ProfilePage() {
+  const params = useParams<{ id: string }>();
+  const { user, loading } = useUser(params.id);
 
-  if (!user) {
+  console.log("............................................", user);
+  if (!user && !loading) {
     notFound();
   }
 
-  const allPosts = await getPosts();
-  const userPosts = allPosts.filter((p) => p.authorId === user.id);
-  const publishedPosts = userPosts.filter((p) => p.published);
-  const draftPosts = userPosts.filter((p) => !p.published);
+  // const allPosts = await getPosts();
+  // const userPosts = allPosts.filter((p) => p.authorId === user?.id);
+  // const publishedPosts = userPosts.filter((p) => p.published);
+  // const draftPosts = userPosts.filter((p) => !p.published);
 
   return (
     <>
-      <section className="bg-card border-b">
-        <div className="container mx-auto px-4 md:px-6 py-12">
-          <ProfileForm user={user} />
-        </div>
-      </section>
+      {user && !loading && (
+        <section className="bg-card border-b">
+          <div className="container mx-auto px-4 md:px-6 py-12">
+            <ProfileForm user={user!} />
+          </div>
+        </section>
+      )}
 
-      <div className="container mx-auto px-4 md:px-6 py-12">
+      {/* <div className="container mx-auto px-4 md:px-6 py-12">
         <Tabs defaultValue="published" className="w-full">
           <TabsList className="grid w-full grid-cols-2 md:w-[400px]">
             <TabsTrigger value="published">
@@ -75,7 +79,7 @@ export default async function ProfilePage({
             )}
           </TabsContent>
         </Tabs>
-      </div>
+      </div> */}
     </>
   );
 }

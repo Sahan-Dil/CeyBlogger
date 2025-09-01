@@ -1,20 +1,20 @@
-import Link from 'next/link';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { PostCard } from '@/components/blog/PostCard';
-import { getPosts } from '@/lib/data';
-import { ArrowRight, Search } from 'lucide-react';
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { PostCard } from "@/components/blog/PostCard";
+import { getPosts } from "@/lib/data";
+import { ArrowRight, Search } from "lucide-react";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
+} from "@/components/ui/select";
 
 export default async function Home() {
   const posts = await getPosts();
-  const publishedPosts = posts.filter(p => p.published);
+  const publishedPosts = posts.filter((p) => p.published);
   const featuredPost = publishedPosts[0];
   const recentPosts = publishedPosts.slice(1);
 
@@ -28,10 +28,14 @@ export default async function Home() {
               {featuredPost.title}
             </h1>
             <p className="mt-4 max-w-2xl text-lg md:text-xl text-primary-foreground/80 mix-blend-difference">
-              A deep dive into the latest trends and technologies shaping our world.
+              A deep dive into the latest trends and technologies shaping our
+              world.
             </p>
             <Link href={`/posts/${featuredPost.id}`} className="mt-8">
-              <Button size="lg" className="bg-accent hover:bg-accent/90 text-accent-foreground">
+              <Button
+                size="lg"
+                className="bg-accent hover:bg-accent/90 text-accent-foreground"
+              >
                 Read Article <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
             </Link>
@@ -45,7 +49,10 @@ export default async function Home() {
         <div className="mb-12 flex flex-col md:flex-row items-center gap-4">
           <div className="relative w-full md:flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-            <Input placeholder="Search posts by title or content..." className="pl-10" />
+            <Input
+              placeholder="Search posts by title or content..."
+              className="pl-10"
+            />
           </div>
           <div className="flex w-full md:w-auto items-center gap-4">
             <Select>
@@ -73,13 +80,13 @@ export default async function Home() {
         {/* Recent Posts */}
         <h2 className="text-3xl font-bold mb-8">Recent Posts</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {recentPosts.map(post => (
+          {recentPosts.map((post) => (
             <PostCard key={post.id} post={post} />
           ))}
         </div>
 
         <div className="mt-12 text-center">
-            <Button variant="outline">Load More Posts</Button>
+          <Button variant="outline">Load More Posts</Button>
         </div>
       </div>
     </div>
