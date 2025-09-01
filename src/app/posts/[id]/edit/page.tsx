@@ -1,13 +1,17 @@
+"use client";
 import { PostForm } from "@/components/blog/PostForm";
-import { getPost } from "@/lib/data";
-import { notFound } from "next/navigation";
+import { usePost } from "@/hooks/use-post";
+import { use } from "react";
 
-export default async function EditPostPage({ params }: { params: { id: string } }) {
-  const post = await getPost(params.id);
+interface EditPostPageProps {
+  params: Promise<{ id: string }>;
+}
 
-  if (!post) {
-    notFound();
-  }
+export default function EditPostPage({ params }: EditPostPageProps) {
+  const resolvedParams = use(params);
+  const id = resolvedParams.id;
+
+  const { post } = usePost(id);
 
   return (
     <div className="container mx-auto max-w-4xl px-4 md:px-6 py-12">
@@ -17,7 +21,7 @@ export default async function EditPostPage({ params }: { params: { id: string } 
           Make changes to your post below and save them.
         </p>
       </div>
-      <PostForm post={post} />
+      {post && <PostForm post={post} />}
     </div>
   );
 }

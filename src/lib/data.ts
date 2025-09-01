@@ -1,3 +1,4 @@
+import { API_URL, ApiError, get } from "./api";
 import type { Post, User, Comment } from "./types";
 
 const users: User[] = [
@@ -120,9 +121,30 @@ const allTags: string[] = [
 ];
 
 // Simulate API calls
-export const getPosts = async (): Promise<Post[]> => {
-  return new Promise((resolve) => setTimeout(() => resolve(posts), 50));
-};
+
+export async function getPosts(limit = 9, cursor?: string) {
+  try {
+    const url = new URL("/posts", process.env.NEXT_PUBLIC_API_URL!); // Make sure this env is set
+    url.searchParams.set("limit", String(limit));
+    url.searchParams.set("published", "true");
+    if (cursor) url.searchParams.set("cursor", cursor);
+
+    const res = await fetch(url.toString(), {
+      cache: "no-store", // always fresh data
+    });
+
+    if (!res.ok) {
+      console.error("Fetch failed:", res.status, await res.text());
+      throw new Error("Failed to fetch posts");
+    }
+
+    const data: { posts: Post[]; nextCursor: string | null } = await res.json();
+    return data;
+  } catch (err) {
+    console.error("getPosts error:", err);
+    throw err;
+  }
+}
 
 export const getPost = async (id: string): Promise<Post | undefined> => {
   return new Promise((resolve) =>
@@ -135,9 +157,29 @@ export const getUsers = async (): Promise<User[]> => {
 };
 
 export const getUser = async (id: string): Promise<User | undefined> => {
-  return new Promise((resolve) =>
-    setTimeout(() => resolve(users.find((u) => u.id === id)), 50)
-  );
+  try {
+    console.log("Fetching user with ID:", id);
+    console.log("API URL:", API_URL);
+
+    const user = await get<User>(`/users/${id}`, {});
+    return user;
+  } catch (err) {
+    console.error("Failed to fetch user", err);
+    console.error("API_URL:", API_URL);
+
+    // Check if it's a network error vs API error
+    if (err instanceof ApiError) {
+      console.error("API Error - Status:", err.status, "Message:", err.message);
+    } else {
+      console.error("Network/Connection Error:", err);
+    }
+
+    return undefined;
+  }
+};
+
+export const updateUser = async (user: User): Promise<User | undefined> => {
+  return new Promise((resolve) => setTimeout(() => resolve(user), 50));
 };
 
 export const getComments = async (postId: string): Promise<Comment[]> => {
