@@ -10,18 +10,23 @@ import { Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ProfileForm } from "@/components/blog/ProfileForm";
 import { useUser } from "@/hooks/use-user";
-import { use } from "react";
+import { use, useState } from "react";
+import { usePosts } from "@/hooks/use-posts";
 
 export default function ProfilePage() {
   const params = useParams<{ id: string }>();
   const { user, loading } = useUser(params.id);
 
-  console.log("............................................", user);
   if (!user && !loading) {
     notFound();
   }
 
-  // const allPosts = await getPosts();
+  const [tab, setTab] = useState<"published" | "drafts">("published");
+  const { posts, loading: postsLoading } = usePosts(
+    params.id,
+    tab === "published"
+  );
+
   // const userPosts = allPosts.filter((p) => p.authorId === user?.id);
   // const publishedPosts = userPosts.filter((p) => p.published);
   // const draftPosts = userPosts.filter((p) => !p.published);
@@ -36,20 +41,27 @@ export default function ProfilePage() {
         </section>
       )}
 
-      {/* <div className="container mx-auto px-4 md:px-6 py-12">
-        <Tabs defaultValue="published" className="w-full">
+      <div className="container mx-auto px-4 md:px-6 py-12">
+        <Tabs
+          defaultValue="published"
+          className="w-full"
+          onValueChange={(v) => setTab(v as "published" | "drafts")}
+        >
           <TabsList className="grid w-full grid-cols-2 md:w-[400px]">
             <TabsTrigger value="published">
-              Published ({publishedPosts.length})
+              Published ({tab === "published" ? posts.length : "..."})
             </TabsTrigger>
             <TabsTrigger value="drafts">
-              Drafts ({draftPosts.length})
+              Drafts ({tab === "drafts" ? posts.length : "..."})
             </TabsTrigger>
           </TabsList>
+
           <TabsContent value="published" className="mt-8">
-            {publishedPosts.length > 0 ? (
+            {postsLoading ? (
+              <p>Loading...</p>
+            ) : posts.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {publishedPosts.map((post) => (
+                {posts.map((post) => (
                   <PostCard key={post.id} post={post} />
                 ))}
               </div>
@@ -62,10 +74,13 @@ export default function ProfilePage() {
               </div>
             )}
           </TabsContent>
+
           <TabsContent value="drafts" className="mt-8">
-            {draftPosts.length > 0 ? (
+            {postsLoading ? (
+              <p>Loading...</p>
+            ) : posts.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {draftPosts.map((post) => (
+                {posts.map((post) => (
                   <PostCard key={post.id} post={post} />
                 ))}
               </div>
@@ -79,7 +94,7 @@ export default function ProfilePage() {
             )}
           </TabsContent>
         </Tabs>
-      </div> */}
+      </div>
     </>
   );
 }

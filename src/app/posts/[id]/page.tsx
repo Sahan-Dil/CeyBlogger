@@ -19,7 +19,7 @@ import { Separator } from "@/components/ui/separator";
 import { CommentSection } from "@/components/blog/CommentSection";
 
 export default async function PostPage({ params }: { params: { id: string } }) {
-  const post = await getPost(params.id);
+  const post = await getPost(params?.id!);
 
   if (!post) {
     notFound();

@@ -1,4 +1,7 @@
-import type { Post } from "@/lib/types";
+"use client";
+
+import { useEffect, useState } from "react";
+import type { Post, User } from "@/lib/types";
 import Link from "next/link";
 import Image from "next/image";
 import {
@@ -18,8 +21,27 @@ type PostCardProps = {
   post: Post;
 };
 
-export async function PostCard({ post }: PostCardProps) {
-  // const author = await getUser(post.authorId);
+export function PostCard({ post }: PostCardProps) {
+  const [author, setAuthor] = useState<User | null>(null);
+
+  useEffect(() => {
+    let active = true;
+
+    const fetchAuthor = async () => {
+      try {
+        const user = await getUser(post.authorId);
+        if (active) setAuthor(user!);
+      } catch (err) {
+        console.error("Failed to load author", err);
+      }
+    };
+
+    fetchAuthor();
+
+    return () => {
+      active = false;
+    };
+  }, [post.authorId]);
 
   return (
     <Card className="flex flex-col overflow-hidden transition-all hover:shadow-lg">
@@ -54,7 +76,7 @@ export async function PostCard({ post }: PostCardProps) {
         </p>
       </CardContent>
       <CardFooter className="p-6 pt-0 flex justify-between items-center">
-        {/* <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3">
           {author && (
             <Link
               href={`/profile/${author.id}`}
@@ -62,7 +84,9 @@ export async function PostCard({ post }: PostCardProps) {
             >
               <Avatar className="h-10 w-10">
                 <AvatarImage src={author.avatarUrl} alt={author.name} />
-                <AvatarFallback>{author.name.charAt(0)}</AvatarFallback>
+                <AvatarFallback>
+                  {author.name ? author.name.charAt(0) : "?"}
+                </AvatarFallback>
               </Avatar>
               <div>
                 <p className="text-sm font-semibold group-hover:text-primary">
@@ -74,7 +98,7 @@ export async function PostCard({ post }: PostCardProps) {
               </div>
             </Link>
           )}
-        </div> */}
+        </div>
         <Link
           href={`/posts/${post.id}`}
           className="text-primary hover:underline flex items-center gap-1 text-sm"
