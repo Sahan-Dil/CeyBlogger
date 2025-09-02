@@ -16,6 +16,7 @@ import { Badge } from "@/components/ui/badge";
 import { ArrowRight } from "lucide-react";
 import { getUser } from "@/lib/data";
 import { format } from "date-fns";
+import { ApiError } from "@/lib/api";
 
 type PostCardProps = {
   post: Post;
@@ -32,7 +33,12 @@ export function PostCard({ post }: PostCardProps) {
         const user = await getUser(post.authorId);
         if (active) setAuthor(user!);
       } catch (err) {
-        console.error("Failed to load author", err);
+        if (err instanceof ApiError && err.status === 401) {
+          console.warn("Token expired or unauthorized. Ignoring author fetch.");
+        } else {
+          console.error("Failed to load author", err);
+        }
+        if (active) setAuthor(null);
       }
     };
 

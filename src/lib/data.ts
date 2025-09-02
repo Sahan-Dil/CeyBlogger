@@ -158,22 +158,26 @@ export const getUsers = async (): Promise<User[]> => {
 
 export const getUser = async (id: string): Promise<User | undefined> => {
   try {
-    console.log("Fetching user with ID:", id);
-    console.log("API URL:", API_URL);
-
-    const user = await get<User>(`/users/${id}`, {});
+    if (!id) return undefined;
+    const user = await get<User>(`/users/${id}`);
     return user;
   } catch (err) {
-    console.error("Failed to fetch user", err);
-    console.error("API_URL:", API_URL);
-
-    // Check if it's a network error vs API error
+    // Only log unexpected errors, ignore 401 (unauthorized)
     if (err instanceof ApiError) {
-      console.error("API Error - Status:", err.status, "Message:", err.message);
+      if (err.status === 401) {
+        // Token expired or unauthorized: silently ignore
+        return undefined;
+      } else {
+        console.error(
+          "API Error - Status:",
+          err.status,
+          "Message:",
+          err.message
+        );
+      }
     } else {
       console.error("Network/Connection Error:", err);
     }
-
     return undefined;
   }
 };

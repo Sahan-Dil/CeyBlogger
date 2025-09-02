@@ -3,7 +3,7 @@
 import { usePost } from "@/hooks/use-post";
 import { useUser } from "@/hooks/use-user";
 import { useAuth } from "@/hooks/use-auth"; // <- import auth
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -13,16 +13,76 @@ import Link from "next/link";
 import { format } from "date-fns";
 import { Separator } from "@/components/ui/separator";
 import { CommentSection } from "@/components/blog/CommentSection";
+import { useState } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogFooter,
+  DialogTitle,
+  DialogDescription,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { useToast } from "@/hooks/use-toast";
+import { getToken } from "@/lib/api";
 
 export default function PostPage() {
   const params = useParams<{ id: string }>();
+  const router = useRouter();
   const postId = params?.id;
 
   const { post } = usePost(postId);
   const { user: author } = useUser(post?.authorId!);
   const { user: authUser } = useAuth(); // get logged-in user
+  const { toast } = useToast();
+
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const isAuthor = authUser?.id === post?.authorId;
+
+  const handleDelete = async () => {
+    if (!post?.id) return;
+
+    const token = getToken();
+    if (!token) {
+      toast({
+        title: "Unauthorized",
+        description: "You must be logged in to delete this post.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsDeleting(true);
+    try {
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/posts/${post.id}`,
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (!res.ok) throw new Error("Failed to delete post");
+
+      toast({
+        title: "Post Deleted",
+        description: "Your post has been removed successfully.",
+      });
+
+      router.push("/");
+    } catch (err: any) {
+      toast({
+        title: "Error",
+        description: err?.message || "Something went wrong",
+        variant: "destructive",
+      });
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   return (
     <>
@@ -103,9 +163,39 @@ export default function PostPage() {
                           <Edit className="mr-2 h-4 w-4" /> Edit
                         </Link>
                       </Button>
-                      <Button variant="destructive" size="sm">
-                        <Trash2 className="mr-2 h-4 w-4" /> Delete
-                      </Button>
+
+                      {/* Delete with confirmation dialog */}
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <Button variant="destructive" size="sm">
+                            <Trash2 className="mr-2 h-4 w-4" /> Delete
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                          <DialogHeader>
+                            <DialogTitle>Delete Post</DialogTitle>
+                            <DialogDescription>
+                              Are you sure you want to delete this post? This
+                              action cannot be undone.
+                            </DialogDescription>
+                          </DialogHeader>
+                          <DialogFooter>
+                            <Button
+                              variant="outline"
+                              onClick={() => setIsDeleting(false)}
+                            >
+                              Cancel
+                            </Button>
+                            <Button
+                              variant="destructive"
+                              onClick={handleDelete}
+                              disabled={isDeleting}
+                            >
+                              {isDeleting ? "Deleting..." : "Delete"}
+                            </Button>
+                          </DialogFooter>
+                        </DialogContent>
+                      </Dialog>
                     </div>
                   )}
                 </div>

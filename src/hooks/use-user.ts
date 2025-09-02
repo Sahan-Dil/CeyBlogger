@@ -26,9 +26,14 @@ export function useUser(userId?: string): UseUserResult {
     try {
       const data = await apiFetch<User>(`/users/${userId}`);
       setUser(data);
-    } catch (err) {
-      console.error("Error fetching user:", err);
-      setError("Failed to load user");
+    } catch (err: any) {
+      if (err?.status === 401) {
+        console.warn("Unauthorized fetching user:", userId);
+        setUser(null);
+      } else {
+        console.error("Error fetching user:", err);
+        setError("Failed to load user");
+      }
     } finally {
       setLoading(false);
     }
