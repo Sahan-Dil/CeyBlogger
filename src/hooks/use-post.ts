@@ -26,8 +26,13 @@ export function usePost(postId?: string): UsePostResult {
       const data = await apiFetch<Post>(url.toString());
       setPost(data);
     } catch (err: any) {
-      console.error("Error fetching post:", err);
-      setError("Failed to load post");
+      if (err?.status === 401) {
+        console.warn("Unauthorized fetching user:");
+        setPost(null);
+      } else {
+        console.error("Error fetching post:", err);
+        setError("Failed to load post");
+      }
     } finally {
       setLoading(false);
     }

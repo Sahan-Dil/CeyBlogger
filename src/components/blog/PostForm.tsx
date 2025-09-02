@@ -99,27 +99,46 @@ export function PostForm({ post }: PostFormProps) {
 
     setIsLoading(true);
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/posts`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(values),
-      });
+      let res: Response;
 
-      if (!res.ok) {
-        throw new Error("Failed to create post");
+      if (post?.id) {
+        // Update existing post
+        res = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/posts/${post.id}`,
+          {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify(values),
+          }
+        );
+      } else {
+        // Create new post
+        res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/posts`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(values),
+        });
       }
 
-      const createdPost = await res.json();
+      if (!res.ok) {
+        throw new Error("Failed to save post");
+      }
+
+      const savedPost = await res.json();
 
       toast({
-        title: "Post Created!",
-        description: `Your post "${createdPost.title}" has been saved successfully.`,
+        title: post?.id ? "Post Updated!" : "Post Created!",
+        description: `Your post "${savedPost.title}" has been saved successfully.`,
       });
 
-      router.push(`/posts/${createdPost.id}`);
+      // Redirect to the post page
+      router.push(`/posts/${savedPost.id}`);
     } catch (err: any) {
       console.error(err);
       toast({

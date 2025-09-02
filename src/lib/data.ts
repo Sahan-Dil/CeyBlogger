@@ -1,5 +1,5 @@
 import { API_URL, ApiError, get } from "./api";
-import type { Post, User, Comment } from "./types";
+import type { Post, User, Comment, FilterOptions } from "./types";
 
 const users: User[] = [
   {
@@ -122,12 +122,22 @@ const allTags: string[] = [
 
 // Simulate API calls
 
-export async function getPosts(limit = 9, cursor?: string) {
+export async function getPosts(
+  limit = 9,
+  cursor?: string,
+  search?: string,
+  authorId?: string,
+  tag?: string
+) {
   try {
-    const url = new URL("/posts", process.env.NEXT_PUBLIC_API_URL!); // Make sure this env is set
+    const url = new URL("/posts", process.env.NEXT_PUBLIC_API_URL!);
     url.searchParams.set("limit", String(limit));
     url.searchParams.set("published", "true");
+
     if (cursor) url.searchParams.set("cursor", cursor);
+    if (search) url.searchParams.set("search", search);
+    if (authorId) url.searchParams.set("authorId", authorId);
+    if (tag) url.searchParams.set("tag", tag);
 
     const res = await fetch(url.toString(), {
       cache: "no-store", // always fresh data
@@ -146,6 +156,32 @@ export async function getPosts(limit = 9, cursor?: string) {
   }
 }
 
+// New function to get filter options (authors and tags)
+export async function getFilters(): Promise<FilterOptions> {
+  try {
+    const url = new URL("/posts/filters", process.env.NEXT_PUBLIC_API_URL!);
+
+    const res = await fetch(url.toString(), {
+      cache: "no-store", // always fresh data for filters
+    });
+
+    if (!res.ok) {
+      console.error("Fetch filters failed:", res.status, await res.text());
+      throw new Error("Failed to fetch filters");
+    }
+
+    const data: FilterOptions = await res.json();
+    return data;
+  } catch (err) {
+    console.error("getFilters error:", err);
+    // Return empty filters as fallback
+    return {
+      authors: [],
+      tags: [],
+    };
+  }
+}
+
 export const getPost = async (id: string): Promise<Post | undefined> => {
   return new Promise((resolve) =>
     setTimeout(() => resolve(posts.find((p) => p.id === id)), 50)
@@ -158,22 +194,26 @@ export const getUsers = async (): Promise<User[]> => {
 
 export const getUser = async (id: string): Promise<User | undefined> => {
   try {
-    console.log("Fetching user with ID:", id);
-    console.log("API URL:", API_URL);
-
-    const user = await get<User>(`/users/${id}`, {});
+    if (!id) return undefined;
+    const user = await get<User>(`/users/${id}`);
     return user;
   } catch (err) {
-    console.error("Failed to fetch user", err);
-    console.error("API_URL:", API_URL);
-
-    // Check if it's a network error vs API error
+    // Only log unexpected errors, ignore 401 (unauthorized)
     if (err instanceof ApiError) {
-      console.error("API Error - Status:", err.status, "Message:", err.message);
+      if (err.status === 401) {
+        // Token expired or unauthorized: silently ignore
+        return undefined;
+      } else {
+        console.error(
+          "API Error - Status:",
+          err.status,
+          "Message:",
+          err.message
+        );
+      }
     } else {
       console.error("Network/Connection Error:", err);
     }
-
     return undefined;
   }
 };
