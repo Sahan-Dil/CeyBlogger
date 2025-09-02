@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import dynamic from "next/dynamic";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Search, X } from "lucide-react";
@@ -11,9 +12,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { PostCard } from "./PostCard";
 import type { Post, Author, FilterOptions } from "@/lib/types";
 import { getPosts as fetchPosts } from "@/lib/data";
+
+// Disable SSR for PostCard to prevent hydration issues
+const PostCard = dynamic(
+  () => import("./PostCard").then((mod) => ({ default: mod.PostCard })),
+  {
+    ssr: false,
+  }
+);
 
 interface SearchAndFilterProps {
   initialPosts: Post[];
@@ -137,7 +145,7 @@ export function SearchAndFilter({
   }, [searchTimeout]);
 
   return (
-    <>
+    <div>
       {/* Search and Filter Controls */}
       <div className="mb-12 space-y-4">
         <div className="flex flex-col md:flex-row items-center gap-4">
@@ -251,6 +259,6 @@ export function SearchAndFilter({
           )}
         </>
       )}
-    </>
+    </div>
   );
 }
