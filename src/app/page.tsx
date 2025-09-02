@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PostCard } from "@/components/blog/PostCard";
-import { getPosts } from "@/lib/data";
+import { getPosts, getFilters } from "@/lib/data";
 import { ArrowRight, Search } from "lucide-react";
 import {
   Select,
@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/select";
 import { PostsFeed } from "@/components/blog/PostsFeed";
 import { FeaturedReadButton } from "@/components/blog/FeaturedReadButton";
+import { SearchAndFilter } from "@/components/blog/SearchAndFilter";
 import striptags from "striptags";
 
 export default async function Home() {
@@ -20,6 +21,9 @@ export default async function Home() {
   const { posts: allPosts, nextCursor } = await getPosts(9);
   const featuredPost = allPosts[0];
   const recentPosts = allPosts.slice(1); // 8 posts
+
+  // Fetch filter options
+  const filters = await getFilters();
 
   const hasPosts = allPosts.length > 0;
 
@@ -73,43 +77,12 @@ export default async function Home() {
 
       {hasPosts && (
         <div className="container mx-auto px-4 md:px-6 py-12">
-          {/* Search and Filter */}
-          <div className="mb-12 flex flex-col md:flex-row items-center gap-4">
-            <div className="relative w-full md:flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-              <Input
-                placeholder="Search posts by title or content..."
-                className="pl-10"
-              />
-            </div>
-            <div className="flex w-full md:w-auto items-center gap-4">
-              <Select>
-                <SelectTrigger className="w-full md:w-[180px]">
-                  <SelectValue placeholder="Filter by Author" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="author1">John Doe</SelectItem>
-                  <SelectItem value="author2">Jane Smith</SelectItem>
-                </SelectContent>
-              </Select>
-              <Select>
-                <SelectTrigger className="w-full md:w-[180px]">
-                  <SelectValue placeholder="Filter by Tag" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="tech">Technology</SelectItem>
-                  <SelectItem value="design">Design</SelectItem>
-                  <SelectItem value="life">Lifestyle</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          {/* Recent Posts */}
-          <h2 className="text-3xl font-bold mb-8">Recent Posts</h2>
-
-          {/* Client component handles pagination */}
-          <PostsFeed initialPosts={recentPosts} initialCursor={nextCursor} />
+          {/* Search and Filter Component */}
+          <SearchAndFilter
+            initialPosts={recentPosts}
+            initialCursor={nextCursor}
+            filters={filters}
+          />
         </div>
       )}
     </div>

@@ -25,3 +25,13 @@ export interface Comment {
   content: string;
   createdAt: string;
 }
+
+export interface Author {
+  id: string;
+  name: string;
+}
+
+export interface FilterOptions {
+  authors: Author[];
+  tags: string[];
+}
