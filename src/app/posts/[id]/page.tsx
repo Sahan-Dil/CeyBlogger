@@ -2,7 +2,7 @@
 
 import { usePost } from "@/hooks/use-post";
 import { useUser } from "@/hooks/use-user";
-import { useAuth } from "@/hooks/use-auth"; // <- import auth
+import { useAuth } from "@/hooks/use-auth";
 import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -13,7 +13,7 @@ import Link from "next/link";
 import { format } from "date-fns";
 import { Separator } from "@/components/ui/separator";
 import { CommentSection } from "@/components/blog/CommentSection";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -33,12 +33,88 @@ export default function PostPage() {
 
   const { post } = usePost(postId);
   const { user: author } = useUser(post?.authorId!);
-  const { user: authUser } = useAuth(); // get logged-in user
+  const { user: authUser } = useAuth();
   const { toast } = useToast();
 
   const [isDeleting, setIsDeleting] = useState(false);
 
   const isAuthor = authUser?.id === post?.authorId;
+
+  // Like state
+  const [likesCount, setLikesCount] = useState(post?.likes ?? 0);
+  const [liked, setLiked] = useState(false);
+
+  // Fetch whether user already liked this post
+  useEffect(() => {
+    if (!authUser) return;
+
+    async function fetchLikedStatus() {
+      const token = getToken();
+      if (!token) return;
+
+      try {
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/posts/${postId}/liked`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        if (!res.ok) throw new Error("Failed to fetch like status");
+
+        const data = await res.json();
+        setLiked(data.liked);
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    fetchLikedStatus();
+  }, [authUser, postId]);
+
+  // Update likesCount if post.likes changes
+  useEffect(() => {
+    setLikesCount(post?.likes ?? 0);
+  }, [post?.likes]);
+
+  const handleLike = async () => {
+    const token = getToken();
+    if (!token) {
+      toast({
+        title: "Unauthorized",
+        description: "You must be logged in to like this post.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/posts/${postId}/like`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ like: !liked }),
+        }
+      );
+
+      if (!res.ok) throw new Error("Failed to update like");
+
+      const updatedCount = await res.json(); // API returns updated count
+      setLikesCount(updatedCount);
+      setLiked(!liked);
+    } catch (err: any) {
+      toast({
+        title: "Error",
+        description: err?.message || "Something went wrong",
+        variant: "destructive",
+      });
+    }
+  };
 
   const handleDelete = async () => {
     if (!post?.id) return;
@@ -59,9 +135,7 @@ export default function PostPage() {
         `${process.env.NEXT_PUBLIC_API_URL}/posts/${post.id}`,
         {
           method: "DELETE",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+          headers: { Authorization: `Bearer ${token}` },
         }
       );
 
@@ -88,7 +162,7 @@ export default function PostPage() {
     <>
       {post && (
         <article>
-          {/* Header with background image */}
+          {/* Header */}
           <header className="relative h-[50vh] w-full">
             <Image
               src={post.imageUrl}
@@ -128,10 +202,9 @@ export default function PostPage() {
             </div>
           </header>
 
-          {/* Main content */}
+          {/* Main Content */}
           <div className="container mx-auto px-4 md:px-6 py-12">
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-12">
-              {/* Post Content */}
               <div className="lg:col-span-3">
                 <div
                   className="prose max-w-none prose-lg dark:prose-invert prose-p:text-foreground/80 prose-headings:text-foreground prose-a:text-primary hover:prose-a:text-primary/80 prose-strong:text-foreground prose-blockquote:border-primary"
@@ -143,19 +216,21 @@ export default function PostPage() {
 
               {/* Sidebar */}
               <aside className="lg:col-span-1 space-y-8">
-                {/* Actions */}
                 <div className="p-4 border rounded-lg bg-card">
                   <h3 className="font-semibold mb-4 text-lg">Actions</h3>
                   <div className="flex items-center gap-2">
-                    <Button variant="outline" className="w-full justify-start">
-                      <Heart className="mr-2 h-4 w-4" /> Like ({post.likes})
+                    <Button
+                      variant={liked ? "destructive" : "outline"}
+                      className="w-full justify-start"
+                      onClick={handleLike}
+                    >
+                      <Heart className="mr-2 h-4 w-4" />{" "}
+                      {liked ? "You Liked This" : "Like post"} ({likesCount})
                     </Button>
                     <Button variant="outline" size="icon">
                       <Share2 className="h-4 w-4" />
                     </Button>
                   </div>
-
-                  {/* Only show if logged-in user is the author */}
                   {isAuthor && (
                     <div className="flex items-center gap-2 mt-4">
                       <Button variant="outline" size="sm" asChild>
@@ -163,8 +238,6 @@ export default function PostPage() {
                           <Edit className="mr-2 h-4 w-4" /> Edit
                         </Link>
                       </Button>
-
-                      {/* Delete with confirmation dialog */}
                       <Dialog>
                         <DialogTrigger asChild>
                           <Button variant="destructive" size="sm">
@@ -200,7 +273,7 @@ export default function PostPage() {
                   )}
                 </div>
 
-                {/* Author Box */}
+                {/* Author & tags */}
                 {author && (
                   <div className="p-4 border rounded-lg bg-card text-center">
                     <Link href={`/profile/${author.id}`}>
@@ -220,11 +293,9 @@ export default function PostPage() {
                   </div>
                 )}
 
-                {/* Tags */}
                 <div className="p-4 border rounded-lg bg-card">
                   <h3 className="font-semibold mb-4 flex items-center">
-                    <Tag className="mr-2 h-4 w-4" />
-                    Tags
+                    <Tag className="mr-2 h-4 w-4" /> Tags
                   </h3>
                   <div className="flex flex-wrap gap-2">
                     {post.tags.map((tag) => (
