@@ -74,11 +74,20 @@ export function PostForm({ post }: PostFormProps) {
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      // Check file size (2 MB = 2 * 1024 * 1024 bytes)
+      if (file.size > 2 * 1024 * 1024) {
+        toast({
+          title: "Image too large",
+          description: "Please upload an image smaller than 2MB.",
+          variant: "destructive",
+        });
+        e.target.value = ""; // reset input
+        return;
+      }
+
       const reader = new FileReader();
       reader.onloadend = () => {
         setImagePreview(reader.result as string);
-        // In a real app, you would upload the file and get a URL
-        // For this mock, we'll just use the base64 data URL for preview
         form.setValue("imageUrl", reader.result as string);
       };
       reader.readAsDataURL(file);
