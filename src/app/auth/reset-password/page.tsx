@@ -14,7 +14,6 @@ import {
 } from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
 
-// Separate component for the form that uses useSearchParams
 function ResetPasswordForm() {
   const searchParams = useSearchParams();
   const token = searchParams.get("token");
@@ -116,7 +115,6 @@ function LoadingFallback() {
   );
 }
 
-// Main component wrapped with Suspense
 export default function ResetPasswordPage() {
   return (
     <Suspense fallback={<LoadingFallback />}>
